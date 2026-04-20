@@ -3,7 +3,7 @@ import numpy as np
 from services.extractor import extract_text_from_pdf
 from services.preprocess import clean_resume_text
 
-model = SentenceTransformer("all-mpnet-base-v2")
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def score_resume(resume_file, job_description: str) -> float:
