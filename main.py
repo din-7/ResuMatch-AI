@@ -37,6 +37,8 @@ async def analyze(
 
     try:
         contents = await resume.read()
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Max 5 MB.")
         pdf_file = io.BytesIO(contents)
         score = score_resume(pdf_file, job_description)
 

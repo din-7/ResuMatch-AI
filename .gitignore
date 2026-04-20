@@ -6,4 +6,5 @@ __pycache__/
 .DS_Store
 AWSCLIV2.pkg
 DEPLOYMENT_NOTES.md
+resume_api.service
 app.py
