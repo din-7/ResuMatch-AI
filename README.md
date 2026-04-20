@@ -1,48 +1,54 @@
-# Resume-Description Similarity Analyzer
+# ResuMatch AI
 
-A full-stack app that scores how well your resume matches a job description using NLP embeddings, then provides AI-powered feedback via Claude on Amazon Bedrock.
+A full-stack app that scores how well your resume matches a job description using NLP embeddings, then provides AI-powered feedback via Llama 3.3 on Groq.
+
+## Live Demo
+
+- **App:** https://resu-match-ai-five.vercel.app
+- **API:** https://resumatch-ai-fd5l.onrender.com
 
 ## Tech Stack
 
-- **Frontend:** React, Vite
-- **Backend:** Python, FastAPI, Uvicorn
-- **ML/NLP:** sentence-transformers (all-mpnet-base-v2), PyTorch, NumPy
-- **AI:** Amazon Bedrock, Claude Sonnet 4.5
-- **Cloud:** AWS EC2, EBS, Security Groups, systemd
-- **Libraries:** pdfplumber, boto3, scikit-learn, SciPy
+- **Frontend:** React, Vite, CSS — hosted on Vercel
+- **Backend:** Python, FastAPI, Uvicorn — hosted on Render
+- **ML/NLP:** sentence-transformers (all-MiniLM-L6-v2), PyTorch (CPU), NumPy
+- **AI Feedback:** Groq API, Llama 3.3 70B
+- **Libraries:** pdfplumber, httpx, scikit-learn, SciPy
 
 ## How It Works
 
 1. Upload a resume PDF and paste a job description
-2. The backend extracts text from the PDF and cleans it
-3. Both texts are converted into 768-dimensional vectors using sentence-transformers
+2. The backend extracts text from the PDF using pdfplumber and cleans it
+3. Both texts are converted into 384-dimensional vectors using sentence-transformers
 4. Cosine similarity (dot product of normalized embeddings) produces a match score
-5. Claude on Bedrock analyzes both texts and generates actionable feedback
+5. Llama 3.3 on Groq analyzes both texts and generates actionable feedback
 
 ## Score Tiers
 
 | Score | Label | Color |
 |-------|-------|-------|
-| 80%+  | Strong Match | Green |
+| 80%+ | Strong Match | Green |
 | 65-80% | Good Match | Blue |
 | 50-65% | Moderate Match | Yellow |
 | Below 50% | Weak Match | Red |
 
+Note: Scores above 90% are rare. A resume and job description are fundamentally different document types — cosine similarity compares semantic meaning, not keyword overlap. A 65%+ is a strong match.
+
 ## Project Structure
 
 ```
-├── main.py                  # FastAPI app (API routes, CORS, static serving)
+├── main.py                  # FastAPI app (API routes, CORS, file size limit)
 ├── services/
 │   ├── embeddings.py        # Model loading and similarity scoring
 │   ├── extractor.py         # PDF text extraction
 │   ├── preprocess.py        # Text cleaning and normalization
-│   └── feedback.py          # Claude via Bedrock integration
-├── resume_api.service       # systemd service for EC2 deployment
+│   └── feedback.py          # Groq API integration for AI feedback
 ├── requirements.txt         # Python dependencies
+├── render.yaml              # Render deployment config
 └── frontend/
     ├── src/
     │   ├── App.jsx          # React UI
-    │   ├── App.css          # Styling
+    │   ├── App.css          # Styling (dark theme)
     │   └── main.jsx         # Entry point
     ├── .env.example         # Environment variable template
     ├── index.html           # HTML shell
@@ -59,6 +65,7 @@ python -m venv venv
 source venv/bin/activate
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
+export GROQ_API_KEY=your_groq_key_here
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -73,28 +80,12 @@ npm run dev
 
 Open `http://localhost:5173` in your browser.
 
-## Deploying to EC2
-
-1. Launch a `t3.medium` Ubuntu 22.04 instance with 20 GB disk
-2. Open ports 22 (SSH) and 8000 (API) in the security group
-3. Upload code via `scp` and install dependencies (use CPU-only PyTorch)
-4. Create `/home/ubuntu/.env` with AWS credentials for Bedrock access
-5. Copy `resume_api.service` to `/etc/systemd/system/` and enable it
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now resume_api
-```
-
 ## Environment Variables
 
 | Variable | Where | Purpose |
 |----------|-------|---------|
-| `VITE_API_URL` | `frontend/.env` | Backend API URL for the frontend |
-| `AWS_ACCESS_KEY_ID` | Server `.env` | AWS credentials for Bedrock |
-| `AWS_SECRET_ACCESS_KEY` | Server `.env` | AWS credentials for Bedrock |
-| `AWS_SESSION_TOKEN` | Server `.env` | AWS session token (if using temporary creds) |
-| `AWS_DEFAULT_REGION` | Server `.env` | AWS region (us-west-2) |
+| `VITE_API_URL` | Vercel / `frontend/.env` | Backend API URL for the frontend |
+| `GROQ_API_KEY` | Render / server env | Groq API key for AI feedback |
 
 ## API Endpoints
 
