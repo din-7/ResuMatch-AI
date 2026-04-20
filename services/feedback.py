@@ -1,13 +1,17 @@
-import boto3
+import os
+import httpx
 import json
 
-bedrock = boto3.client("bedrock-runtime", region_name="us-west-2")
-
-MODEL_ID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 def generate_feedback(resume_text: str, job_description: str, score: float) -> str:
-    """Use Claude via Bedrock to explain the similarity score and suggest improvements."""
+    """Use Groq (Llama 3.3 70B) to explain the similarity score and suggest improvements."""
+
+    if not GROQ_API_KEY:
+        return None
 
     prompt = f"""You are a career coach. A candidate's resume was compared against a job description
 using NLP embeddings and received a similarity score of {score:.0%}.
@@ -25,18 +29,20 @@ Provide a brief, actionable analysis:
 
 Keep it concise and practical. No fluff."""
 
-    response = bedrock.invoke_model(
-        modelId=MODEL_ID,
-        contentType="application/json",
-        accept="application/json",
-        body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
+    response = httpx.post(
+        GROQ_URL,
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": GROQ_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 1024,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-        }),
+        },
+        timeout=30,
     )
 
-    result = json.loads(response["body"].read())
-    return result["content"][0]["text"]
+    response.raise_for_status()
+    result = response.json()
+    return result["choices"][0]["message"]["content"]

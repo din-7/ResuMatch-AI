@@ -1,8 +1,7 @@
 numpy
 pdfplumber
 sentence_transformers
-streamlit
 fastapi
 uvicorn
 python-multipart
-boto3
+httpx
